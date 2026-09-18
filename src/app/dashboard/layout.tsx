@@ -19,7 +19,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setRole(userRole || 'member');
 
       // Initialize real-time sync
-      const es = new EventSource(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081'}/api/sync?token=${token}`);
+      const es = new EventSource(`${process.env.NEXT_PUBLIC_API_URL || 'https://omc-be.onrender.com'}/api/sync?token=${token}`);
       es.addEventListener('message', (event) => {
         if (event.data.startsWith('update_')) {
           window.dispatchEvent(new Event('sync_update'));

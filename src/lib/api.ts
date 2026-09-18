@@ -2,7 +2,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081', // Backend URL
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://omc-be.onrender.com', // Backend URL
 });
 
 api.interceptors.request.use((config) => {
