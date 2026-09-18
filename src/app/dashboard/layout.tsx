@@ -57,7 +57,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 px-2 pt-6">Officers Only</div>
               <Link href="/dashboard/orders" className="block px-3 py-2 text-sm uppercase tracking-wider font-semibold rounded-md hover:bg-secondary hover:text-secondary-foreground transition-colors">Orders & History</Link>
-              <Link href="/dashboard/orders?tab=by-account" className="block px-3 py-2 text-sm uppercase tracking-wider font-semibold rounded-md hover:bg-secondary hover:text-secondary-foreground transition-colors">History by Account</Link>
+              {/*<Link href="/dashboard/orders?tab=by-account" className="block px-3 py-2 text-sm uppercase tracking-wider font-semibold rounded-md hover:bg-secondary hover:text-secondary-foreground transition-colors">History by Account</Link>*/}
               <Link href="/dashboard/manage" className="block px-3 py-2 text-sm uppercase tracking-wider font-semibold rounded-md hover:bg-secondary hover:text-secondary-foreground transition-colors">Manage Inventory</Link>
               <Link href="/dashboard/analytics" className="block px-3 py-2 text-sm uppercase tracking-wider font-semibold rounded-md hover:bg-secondary hover:text-secondary-foreground transition-colors">Analytics</Link>
             </>
