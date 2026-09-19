@@ -3,12 +3,39 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import Link from 'next/link';
+import api from '@/lib/api';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { LogOut, Key } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
+  const [isPwdOpen, setIsPwdOpen] = useState(false);
+  const [pwdForm, setPwdForm] = useState({ old: '', new: '', confirm: '' });
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pwdForm.new !== pwdForm.confirm) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (pwdForm.new.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    try {
+      await api.put('/api/me/password', { old_password: pwdForm.old, new_password: pwdForm.new });
+      toast.success('Password updated successfully');
+      setIsPwdOpen(false);
+      setPwdForm({ old: '', new: '', confirm: '' });
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to update password');
+    }
+  };
 
   useEffect(() => {
     const token = Cookies.get('token');
@@ -82,7 +109,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </>
           )}
         </nav>
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-border space-y-2">
+          <Dialog open={isPwdOpen} onOpenChange={setIsPwdOpen}>
+            <DialogTrigger render={<Button variant="ghost" className="w-full justify-start text-zinc-400 hover:text-white hover:bg-zinc-900 uppercase tracking-wider font-bold" />}>
+                <Key className="mr-2 h-4 w-4" />
+                Change Password
+            </DialogTrigger>
+            <DialogContent className="bg-zinc-950 border-zinc-800">
+              <DialogHeader>
+                <DialogTitle className="uppercase font-black tracking-widest text-primary">Change Password</DialogTitle>
+                <DialogDescription className="text-xs uppercase tracking-widest text-zinc-400">
+                  Update your account password securely.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handlePasswordChange} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-widest font-bold text-zinc-400">Current Password</Label>
+                  <Input type="password" value={pwdForm.old} onChange={e => setPwdForm({...pwdForm, old: e.target.value})} required className="bg-black/80 border-zinc-700 h-10" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-widest font-bold text-zinc-400">New Password</Label>
+                  <Input type="password" value={pwdForm.new} onChange={e => setPwdForm({...pwdForm, new: e.target.value})} required className="bg-black/80 border-zinc-700 h-10" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-widest font-bold text-zinc-400">Confirm New Password</Label>
+                  <Input type="password" value={pwdForm.confirm} onChange={e => setPwdForm({...pwdForm, confirm: e.target.value})} required className="bg-black/80 border-zinc-700 h-10" />
+                </div>
+                <DialogFooter className="pt-4">
+                  <Button type="button" variant="ghost" onClick={() => setIsPwdOpen(false)} className="uppercase font-bold tracking-widest text-xs">Cancel</Button>
+                  <Button type="submit" className="uppercase font-black tracking-widest text-xs bg-primary text-black hover:bg-yellow-500">Update Password</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+
           <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 uppercase tracking-wider font-bold">
             <LogOut className="mr-2 h-4 w-4" />
             Ride Out
