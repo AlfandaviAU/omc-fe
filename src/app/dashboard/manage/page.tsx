@@ -290,7 +290,7 @@ export default function ManageProducts() {
               <div className="space-y-2">
                 <Label className="text-xs uppercase tracking-widest font-bold text-zinc-400">Price ($)</Label>
                 <Input 
-                  type="number" step="1"
+                  type="number" step="1" min="0"
                   value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value)})} required 
                   className="bg-black/80 border-zinc-700 focus-visible:ring-primary h-10"
                 />
@@ -298,7 +298,7 @@ export default function ManageProducts() {
               <div className="space-y-2">
                 <Label className="text-xs uppercase tracking-widest font-bold text-zinc-400">Stock Qty</Label>
                 <Input 
-                  type="number" 
+                  type="number" min="0"
                   value={formData.stock} onChange={e => setFormData({...formData, stock: parseInt(e.target.value)})} required 
                   className="bg-black/80 border-zinc-700 focus-visible:ring-primary h-10"
                 />
