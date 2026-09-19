@@ -1,4 +1,5 @@
 'use client';
+import { toast } from "sonner";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
@@ -17,10 +18,10 @@ export default function Register() {
     e.preventDefault();
     try {
       await api.post('/register', { username, password, role: 'member' });
-      alert('Registration successful, please login');
+      toast.success('Registration successful, please login');
       router.push('/login');
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Registration failed');
+      toast.error(err.response?.data?.error || 'Registration failed');
     }
   };
 

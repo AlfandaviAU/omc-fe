@@ -1,4 +1,5 @@
 'use client';
+import { toast } from "sonner";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
@@ -20,9 +21,10 @@ export default function Login() {
       const res = await api.post('/login', { username, password });
       Cookies.set('token', res.data.token);
       Cookies.set('role', res.data.role);
+      Cookies.set('username', res.data.username);
       router.push('/dashboard');
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Login failed');
+      toast.error(err.response?.data?.error || 'Login failed');
     }
   };
 

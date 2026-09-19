@@ -17,6 +17,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.push('/login');
     } else {
       setRole(userRole || 'member');
+      
+      // Ensure username is in cookies
+      if (!Cookies.get('username')) {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081'}/api/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.username) Cookies.set('username', data.username);
+          })
+          .catch(console.error);
+      }
 
       // Initialize real-time sync
       const es = new EventSource(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081'}/api/sync?token=${token}`);

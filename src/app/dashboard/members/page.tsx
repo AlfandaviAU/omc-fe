@@ -1,4 +1,5 @@
 'use client';
+import { toast } from "sonner";
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,6 +14,7 @@ type Member = {
   ID: number;
   username: string;
   role: string;
+  photo_url?: string;
 };
 
 const roleLabel: Record<string, string> = {
@@ -41,8 +43,11 @@ export default function ManageMembers() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('member');
+  const [photoUrl, setPhotoUrl] = useState('');
+  
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editRole, setEditRole] = useState('');
+  const [editPhotoUrl, setEditPhotoUrl] = useState('');
 
   useEffect(() => {
     fetchMembers();
@@ -64,23 +69,24 @@ export default function ManageMembers() {
   const handleCreateMember = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/api/users', { username, password, role });
+      await api.post('/api/users', { username, password, role, photo_url: photoUrl });
       setUsername('');
       setPassword('');
       setRole('member');
+      setPhotoUrl('');
       fetchMembers();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to create member');
+      toast.error(err.response?.data?.error || 'Failed to create member');
     }
   };
 
-  const handleUpdateRole = async (id: number) => {
+  const handleUpdateUser = async (id: number) => {
     try {
-      await api.put(`/api/users/${id}`, { role: editRole });
+      await api.put(`/api/users/${id}`, { role: editRole, photo_url: editPhotoUrl });
       setEditingId(null);
       fetchMembers();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to update role');
+      toast.error(err.response?.data?.error || 'Failed to update user');
     }
   };
 
@@ -90,18 +96,20 @@ export default function ManageMembers() {
       await api.delete(`/api/users/${id}`);
       fetchMembers();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to delete member');
+      toast.error(err.response?.data?.error || 'Failed to delete member');
     }
   };
 
   const startEdit = (member: Member) => {
     setEditingId(member.ID);
     setEditRole(member.role);
+    setEditPhotoUrl(member.photo_url || '');
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditRole('');
+    setEditPhotoUrl('');
   };
 
   return (
@@ -143,6 +151,10 @@ export default function ManageMembers() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label>Photo URL (Optional)</Label>
+                  <Input value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} placeholder="https://..." className="bg-black/80" />
+                </div>
                 <Button type="submit" className="w-full uppercase font-black tracking-widest">Create Member</Button>
               </form>
             </CardContent>
@@ -158,33 +170,45 @@ export default function ManageMembers() {
 
             return (
               <div key={m.ID} className="flex items-center justify-between bg-zinc-950 p-4 border border-zinc-800 rounded-lg">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center">
-                    <User className="w-5 h-5 text-zinc-500" />
-                  </div>
-                  <div>
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                  {m.photo_url ? (
+                    <img src={m.photo_url} alt={m.username} className="w-12 h-12 rounded-full object-cover bg-zinc-900 border border-zinc-700" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center">
+                      <User className="w-5 h-5 text-zinc-500" />
+                    </div>
+                  )}
+                  <div className="flex-1">
                     <div className="font-black text-lg text-white uppercase tracking-wider">{m.username}</div>
                     {isEditing ? (
-                      <div className="flex items-center gap-2 mt-1">
-                        <Select value={editRole} onValueChange={(val) => setEditRole(val || '')}>
-                          <SelectTrigger className="h-7 text-xs bg-black/80 w-40">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="member">Member</SelectItem>
-                            <SelectItem value="sgt">SGT At Arms</SelectItem>
-                            <SelectItem value="admin">President</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-500 hover:text-emerald-400" onClick={() => handleUpdateRole(m.ID)}>
-                          <Check className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-zinc-500 hover:text-zinc-300" onClick={cancelEdit}>
-                          <X className="w-4 h-4" />
-                        </Button>
+                      <div className="flex flex-col gap-2 mt-2">
+                        <div className="flex items-center gap-2">
+                          <Select value={editRole} onValueChange={(val) => setEditRole(val || '')}>
+                            <SelectTrigger className="h-8 text-xs bg-black/80 w-40">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="member">Member</SelectItem>
+                              <SelectItem value="sgt">SGT At Arms</SelectItem>
+                              <SelectItem value="admin">President</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input 
+                            value={editPhotoUrl} 
+                            onChange={(e) => setEditPhotoUrl(e.target.value)} 
+                            placeholder="Photo URL" 
+                            className="h-8 text-xs bg-black/80 w-48"
+                          />
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-400" onClick={() => handleUpdateUser(m.ID)}>
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-zinc-500 hover:text-zinc-300" onClick={cancelEdit}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     ) : (
-                      <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-sm border ${badge.className}`}>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3 py-1 mt-1 rounded-sm border ${badge.className}`}>
                         <BadgeIcon className="w-3 h-3" /> {roleLabel[m.role] || m.role}
                       </span>
                     )}

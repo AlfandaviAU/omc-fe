@@ -1,11 +1,13 @@
 'use client';
+import { toast } from "sonner";
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import api from '@/lib/api';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, X, Search, Crosshair, Package, Wrench, Pill, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, X, Search, Crosshair, Package, Wrench, Pill, LayoutGrid, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -136,7 +138,7 @@ export default function Dashboard() {
   const addToCart = (product: Product) => {
     const q = quantities[product.ID] || 1;
     if (product.stock < q) {
-      alert("Not enough stock available.");
+      toast.error("Not enough stock available.");
       return;
     }
     
@@ -177,7 +179,7 @@ export default function Dashboard() {
     
     for (const p of bundleProducts) {
        if (p.stock < 1) {
-          alert(`Cannot add bundle: ${p.name} is out of stock!`);
+          toast.error(`Cannot add bundle: ${p.name} is out of stock!`);
           return;
        }
     }
@@ -205,19 +207,22 @@ export default function Dashboard() {
            url.startsWith('https://media.discordapp.net/attachments/');
   };
 
+  const [checkoutError, setCheckoutError] = useState('');
+
   const handleCheckout = async () => {
+    setCheckoutError('');
     if (!selectedSgt) {
-      alert("Please select a destination (SGT) for the transfer.");
+      setCheckoutError("Please select a destination (SGT) for the transfer.");
       return;
     }
 
     if (!proofImage) {
-      alert("Please provide a receipt screenshot link (Proof of Transfer) to complete the checkout.");
+      setCheckoutError("Please provide a receipt screenshot link (Proof of Transfer) to complete the checkout.");
       return;
     }
     
     if (!isValidDiscordLink(proofImage)) {
-      alert("Invalid link! Please provide a valid Discord image link (must start with cdn.discordapp.com or media.discordapp.net).");
+      setCheckoutError("Invalid link! Please provide a valid Discord image link (must start with cdn.discordapp.com or media.discordapp.net).");
       return;
     }
     
@@ -232,9 +237,10 @@ export default function Dashboard() {
       setSelectedSgt(null);
       setProofImage('');
       setCheckoutSuccess(true);
+      setCheckoutError('');
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to place order');
+      setCheckoutError(err.response?.data?.error || 'Failed to place order');
     }
   };
 
@@ -331,7 +337,7 @@ export default function Dashboard() {
     
     const q = quantities[selectedProduct.ID] || 1;
     if (selectedProduct.stock < q) {
-      alert("Not enough stock available for the weapon.");
+      toast.error("Not enough stock available for the weapon.");
       return;
     }
 
@@ -628,28 +634,45 @@ export default function Dashboard() {
                       <p className="text-xs uppercase tracking-widest font-black text-primary flex items-center gap-2 mb-2">
                         <Crosshair className="w-4 h-4" /> Destination (SGT)
                       </p>
-                      <Select
-                        value={selectedSgt ? selectedSgt.toString() : ''}
-                        onValueChange={(v) => setSelectedSgt(v ? Number(v) : null)}
-                      >
-                        <SelectTrigger className="bg-black/80 border-primary/30 text-white text-xs h-11">
-                          <SelectValue placeholder="Select Sergeant at Arms">
-                            {(val) => {
-                              const s = sgts.find(x => String(x.ID ?? x.id) === String(val || selectedSgt));
-                              return s ? s.username : null;
-                            }}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sgts.map(s => {
-                            const sgtId = s.ID ?? s.id;
-                            if (sgtId === undefined || sgtId === null) return null;
-                            return (
-                              <SelectItem key={sgtId} value={sgtId.toString()}>{s.username}</SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {sgts.map(s => {
+                          const sgtId = s.ID ?? s.id;
+                          if (sgtId === undefined || sgtId === null) return null;
+                          const isSelected = selectedSgt === sgtId;
+                          return (
+                            <div 
+                              key={sgtId} 
+                              onClick={() => setSelectedSgt(sgtId)}
+                              className={`flex flex-col items-center gap-2 p-3 rounded-lg cursor-pointer border transition-all duration-300 relative overflow-hidden ${
+                                isSelected 
+                                  ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(234,179,8,0.2)] scale-[1.02]' 
+                                  : 'bg-black/60 border-zinc-800 hover:border-primary/50 hover:bg-primary/5 hover:scale-[1.01]'
+                              }`}
+                            >
+                              {isSelected && <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent pointer-events-none" />}
+                              {(s as any).photo_url ? (
+                                <img src={(s as any).photo_url} alt={s.username} className={`w-10 h-10 rounded-full object-cover transition-colors ${
+                                  isSelected ? 'shadow-[0_0_10px_rgba(234,179,8,0.5)] border-2 border-primary' : 'border border-zinc-700'
+                                }`} />
+                              ) : (
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black uppercase transition-colors ${
+                                  isSelected ? 'bg-primary text-black shadow-[0_0_10px_rgba(234,179,8,0.5)]' : 'bg-zinc-900 border border-zinc-700 text-zinc-500'
+                                }`}>
+                                  {s.username.substring(0, 2)}
+                                </div>
+                              )}
+                              <span className={`font-black uppercase tracking-wider text-xs truncate w-full text-center ${isSelected ? 'text-primary' : 'text-zinc-400'}`}>
+                                {s.username}
+                              </span>
+                              {isSelected && (
+                                <div className="absolute top-1.5 right-1.5">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <p className="text-xs uppercase tracking-widest font-black text-primary flex items-center gap-2 mb-3">
@@ -659,9 +682,23 @@ export default function Dashboard() {
                     <Input 
                       placeholder="https://cdn.discordapp.com/attachments/..." 
                       value={proofImage}
-                      onChange={(e) => setProofImage(e.target.value)}
+                      onChange={(e) => {
+                        setProofImage(e.target.value);
+                        setCheckoutError('');
+                      }}
                       className="bg-black/80 border-primary/30 text-white text-xs placeholder:text-zinc-600 focus-visible:ring-primary h-11 mb-2"
                     />
+                    
+                    {checkoutError && (
+                      <Alert variant="destructive" className="bg-red-950/40 border-red-900 mt-2 mb-3">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle className="uppercase font-black tracking-wider text-xs">Error</AlertTitle>
+                        <AlertDescription className="text-xs">
+                          {checkoutError}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
                     <div className="text-[10px] text-zinc-400 bg-black/40 border border-zinc-800 rounded p-2.5">
                       <p className="font-bold text-primary mb-1 uppercase tracking-wider">How to get a Discord Image Link:</p>
                       <ol className="list-decimal list-inside space-y-1 ml-1 text-zinc-500">

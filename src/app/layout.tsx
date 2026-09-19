@@ -17,13 +17,18 @@ export const metadata: Metadata = {
   description: "Official club operations",
 };
 
+import { Toaster } from "@/components/ui/sonner";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${oswald.variable} ${inter.variable} min-h-screen antialiased dark font-sans bg-black`}
     >
-      <body className="min-h-screen flex flex-col">{children}</body>
+      <body className="min-h-screen flex flex-col">
+        {children}
+        <Toaster theme="dark" position="bottom-right" richColors />
+      </body>
     </html>
   );
 }
